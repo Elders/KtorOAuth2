@@ -1,1 +1,4 @@
 jdk: openjdk11
+install:
+  - ./gradlew :ktoroauth2:build :ktoroauth2:publishToMavenLocal -x :ktoroauth2:test
+  - find . -name "*.aar"
