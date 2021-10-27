@@ -1,0 +1,10 @@
+*.iml
+.gradle
+build
+local.properties
+.idea/*
+!.idea/runConfigurations
+!.idea/runConfigurations/*
+!.idea/compiler.xml
+!.idea/gradle.xml
+!.idea/vcs.xml
