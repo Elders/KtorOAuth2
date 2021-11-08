@@ -7,7 +7,7 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 
-class BearerAuthorizer(private val authorizationFlow: AuthorizationFlow) : Authorizer {
+class BearerAuthorizer(private val authorizationFlow: AuthorizationFlow, private val requestBuilderBlock: (HttpRequestBuilder.() -> Unit)? = null) : Authorizer {
 
     override suspend fun authorize(request: HttpRequestBuilder, client: HttpClient) {
         // Only header authorization is supported
@@ -15,10 +15,14 @@ class BearerAuthorizer(private val authorizationFlow: AuthorizationFlow) : Autho
         val token = authorizationFlow.getToken(client)
 
         request.headers[HttpHeaders.Authorization] = "$KEY_BEARER ${token.accessToken}"
+
+        requestBuilderBlock?.let {
+            request.it()
+        }
     }
 }
 
-fun OAuth2.bearer(authorizationFlow: AuthorizationFlow,) {
+fun OAuth2.bearer(authorizationFlow: AuthorizationFlow, requestBuilderBlock: (HttpRequestBuilder.() -> Unit)? = null) {
 
     this.authorizer = BearerAuthorizer(authorizationFlow)
 }
