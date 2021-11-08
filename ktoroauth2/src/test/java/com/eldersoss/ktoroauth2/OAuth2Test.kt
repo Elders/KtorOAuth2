@@ -80,7 +80,7 @@ class OAuth2Test {
     }
 
 
-    private val credentialsProvider: suspend () -> Credentials = {
+    private val credentialsProvider: suspend (t: Throwable?) -> Credentials = {
 
         suspendCancellableCoroutine { continuation ->
 
@@ -141,7 +141,7 @@ class OAuth2Test {
                         authorizer = BasicAuthorizer(
                             "client", "secret"
                         ),
-                        credentials = credentialsProvider
+                        credentialsProvider = credentialsProvider
                     )
                 )
             }

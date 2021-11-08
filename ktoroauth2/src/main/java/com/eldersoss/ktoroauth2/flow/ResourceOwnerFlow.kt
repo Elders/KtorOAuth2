@@ -14,7 +14,8 @@ class ResourceOwnerFlow(
     scope: String,
     authorizer: Authorizer,
     private val storage: Storage? = null,
-    private val credentials: suspend () -> Credentials
+    private val retryAuthentication: Boolean = true,
+    private val credentialsProvider: suspend (t: Throwable?) -> Credentials
 ) : AuthorizationFlow(tokenEndPoint, scope, authorizer) {
 
     private val mutex = Mutex()
@@ -40,24 +41,13 @@ class ResourceOwnerFlow(
                 // just continue requesting credentials
             }
 
-            val credentials: Credentials = credentials.invoke()
-
-            val token = client.submitForm<Token>(url = tokenEndPoint,
-                formParameters = Parameters.build {
-                    append(KEY_GRANT_TYPE, KEY_PASSWORD)
-                    append(KEY_USERNAME, credentials.username)
-                    append(KEY_PASSWORD, credentials.password)
-                    append(KEY_SCOPE, scope)
-                }) {
-
-                this.attributes.put(OAuth2.authRequestAttribute, Unit)
-                authorizer.authorize(this, client)
-            }
+            val token = authenticate(client, null)
 
             this.token = token
             this.token?.refreshToken?.let { refreshToken ->
                 storage?.write(KEY_STORED_REFRESH_TOKEN, refreshToken)
             }
+
             return token
         }
     }
@@ -66,6 +56,35 @@ class ResourceOwnerFlow(
 
         this.token = null
         this.storage?.delete(KEY_STORED_REFRESH_TOKEN)
+    }
+
+    private suspend fun authenticate(client: HttpClient, t: Throwable?): Token {
+        return try {
+            tryAuthenticate(client, t)
+        } catch (t: Throwable) {
+            if (retryAuthentication) {
+                authenticate(client, t)
+            } else {
+                throw t
+            }
+        }
+    }
+
+    private suspend fun tryAuthenticate(client: HttpClient, t: Throwable?): Token {
+
+        val credentials: Credentials = credentialsProvider.invoke(t)
+
+        return client.submitForm(url = tokenEndPoint,
+            formParameters = Parameters.build {
+                append(KEY_GRANT_TYPE, KEY_PASSWORD)
+                append(KEY_USERNAME, credentials.username)
+                append(KEY_PASSWORD, credentials.password)
+                append(KEY_SCOPE, scope)
+            }) {
+
+            this.attributes.put(OAuth2.authRequestAttribute, Unit)
+            authorizer.authorize(this, client)
+        }
     }
 
     private suspend fun tryRefreshToken(client: HttpClient): Token? {

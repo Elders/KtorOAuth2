@@ -1,6 +1,5 @@
 package com.eldersoss.ktoroauth2.authorizer
 
-import com.eldersoss.ktoroauth2.authorizer.Authorizer
 import com.eldersoss.ktoroauth2.KEY_BEARER
 import com.eldersoss.ktoroauth2.OAuth2
 import com.eldersoss.ktoroauth2.flow.AuthorizationFlow
