@@ -89,7 +89,11 @@ class ResourceOwnerFlow(
             formParameters = Parameters.build {
                 append(KEY_GRANT_TYPE, KEY_REFRESH_TOKEN)
                 append(KEY_REFRESH_TOKEN, refreshToken)
-            })
+            }) {
+
+            this.attributes.put(OAuth2.authRequestAttribute, Unit)
+            authorizer.authorize(this, client)
+        }
     }
 
     companion object {
