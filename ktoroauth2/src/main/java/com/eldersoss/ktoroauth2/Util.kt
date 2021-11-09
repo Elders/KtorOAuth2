@@ -1,6 +1,7 @@
 package com.eldersoss.ktoroauth2
 
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CancellationException
 
 private const val BASE64_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
@@ -43,4 +44,18 @@ internal fun String.base64encode(): String {
     }
 
     return stringBuilder.toString()
+}
+
+
+internal fun Throwable.unwrapCancellationException(): Throwable {
+    var exception: Throwable? = this
+    while (exception is CancellationException) {
+        // If there is a cycle, we return the initial exception.
+        if (exception == exception.cause) {
+            return this
+        }
+        exception = exception.cause
+    }
+
+    return exception ?: this
 }
