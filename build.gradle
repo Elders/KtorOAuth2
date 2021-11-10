@@ -2,7 +2,7 @@
 buildscript {
     ext {
         kotlin_version = '1.5.31'
-        ktor_version = '1.6.4'
+        ktor_version = '1.6.5'
     }
 
     repositories {

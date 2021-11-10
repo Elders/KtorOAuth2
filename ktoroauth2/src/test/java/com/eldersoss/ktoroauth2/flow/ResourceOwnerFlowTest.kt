@@ -91,18 +91,18 @@ class ResourceOwnerFlowTest {
 
         val storage = object : Storage {
 
-            val map = HashMap<String, String>()
+            var value: String? = null
 
-            override suspend fun read(key: String): String? {
-                return map[key]
+            override suspend fun read(): String? {
+                return this.value
             }
 
-            override suspend fun delete(key: String) {
-                map.remove(key)
+            override suspend fun delete() {
+                this.value = null
             }
 
-            override suspend fun write(key: String, value: String) {
-                map[key] = value
+            override suspend fun write(value: String) {
+                this.value = value
             }
         }
 
