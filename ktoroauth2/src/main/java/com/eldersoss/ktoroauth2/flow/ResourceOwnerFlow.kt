@@ -33,7 +33,7 @@ class ResourceOwnerFlow(
 
                     this.token = token
                     this.token?.refreshToken?.let { refreshToken ->
-                        storage?.write(KEY_STORED_REFRESH_TOKEN, refreshToken)
+                        storage?.write(refreshToken)
                     }
                     return token
                 }
@@ -45,7 +45,7 @@ class ResourceOwnerFlow(
 
             this.token = token
             this.token?.refreshToken?.let { refreshToken ->
-                storage?.write(KEY_STORED_REFRESH_TOKEN, refreshToken)
+                storage?.write(refreshToken)
             }
 
             return token
@@ -55,7 +55,7 @@ class ResourceOwnerFlow(
     suspend fun revokeAuthentication() {
 
         this.token = null
-        this.storage?.delete(KEY_STORED_REFRESH_TOKEN)
+        this.storage?.delete()
     }
 
     private suspend fun authenticate(client: HttpClient, t: Throwable?): Token {
@@ -94,7 +94,7 @@ class ResourceOwnerFlow(
             return refreshToken(it, client)
         }
 
-        storage?.read(KEY_STORED_REFRESH_TOKEN)?.let {
+        storage?.read()?.let {
 
             return refreshToken(it, client)
         }
@@ -113,10 +113,5 @@ class ResourceOwnerFlow(
             this.attributes.put(OAuth2.authRequestAttribute, Unit)
             authorizer.authorize(this, client)
         }
-    }
-
-    companion object {
-
-        private const val KEY_STORED_REFRESH_TOKEN = "mrgYKidHtJB7"
     }
 }
