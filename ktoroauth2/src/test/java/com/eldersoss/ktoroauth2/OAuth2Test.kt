@@ -4,9 +4,10 @@ import com.eldersoss.ktoroauth2.authorizer.BasicAuthorizer
 import com.eldersoss.ktoroauth2.authorizer.bearer
 import com.eldersoss.ktoroauth2.flow.ClientCredentialsFlow
 import com.eldersoss.ktoroauth2.flow.ResourceOwnerFlow
-import com.eldersoss.ktoroauth2.throwable.InvalidGrandException
+import com.eldersoss.ktoroauth2.storage.Storage
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
+import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
@@ -159,32 +160,14 @@ class OAuth2Test {
     }
 
     @Test
-    fun testInvalidGrantWithResourceOwnerFlow() = runBlocking {
+    fun testThrowRandomResourceOwnerFlow() = runBlocking {
 
         val engine = MockEngine { request ->
-
-            when (request.url.toString()) {
-
-                TOKEN_ENDPOINT -> {
-                    val postBody = (request.body as FormDataContent).bytes().toString(StandardCharsets.UTF_8)
-                    """{
-                        	"error": "invalid_grant",
-                        	"error_description": "Invalid username or password"
-                       }""".trimIndent()
-
-                    respond(
-                        content = postBody.toByteArray(StandardCharsets.UTF_8),
-                        status = HttpStatusCode.BadRequest,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-                }
-
-                else -> respond(
-                    content = "",
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, "application/json")
-                )
-            }
+            respond(
+                content = "The server is DEAD",
+                status = HttpStatusCode.InternalServerError,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
         }
 
         val client = HttpClient(engine) {
@@ -198,7 +181,16 @@ class OAuth2Test {
                         authorizer = BasicAuthorizer(
                             "client", "secret"
                         ),
-                        credentialsProvider = credentialsProvider
+                        credentialsProvider = credentialsProvider,
+                        storage = object : Storage {
+                            override suspend fun read(): String? {
+                                return REFRESH_TOKEN
+                            }
+
+                            override suspend fun write(value: String) {}
+
+                            override suspend fun delete() {}
+                        }
                     )
                 )
             }
@@ -216,8 +208,6 @@ class OAuth2Test {
                 e
             }
 
-
-        Assert.assertTrue(exception is InvalidGrandException)
-        Assert.assertEquals("Invalid username or password", exception?.message)
+        Assert.assertTrue(exception is ServerResponseException)
     }
 }
