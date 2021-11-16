@@ -3,6 +3,7 @@ package com.eldersoss.ktoroauth2.flow
 import com.eldersoss.ktoroauth2.*
 import com.eldersoss.ktoroauth2.authorizer.Authorizer
 import com.eldersoss.ktoroauth2.storage.Storage
+import com.eldersoss.ktoroauth2.throwable.OAuth2Exception
 import io.ktor.client.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
@@ -38,7 +39,9 @@ class ResourceOwnerFlow(
                     return token
                 }
             } catch (t: Throwable) {
-                // just continue requesting credentials
+                if (t !is OAuth2Exception) {
+                    throw t
+                }
             }
 
             val token = authenticate(client, null)
